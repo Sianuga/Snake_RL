@@ -8,6 +8,7 @@ pygame.init()
 font = pygame.font.Font('arial.ttf', 25)
 
 
+
 class Direction(Enum):
     RIGHT = 1
     LEFT = 2
@@ -24,7 +25,19 @@ BLUE2 = (0, 100, 255)
 BLACK = (0,0,0)
 
 BLOCK_SIZE = 20
-SPEED = 40
+SPEED = 10000
+LAST_SPEED = 10000
+STANDARD_SPEED =40
+
+events = pygame.event.get()
+for event in events:
+    if event.type == pygame.KEYDOWN:
+        if event.key == pygame.K_LEFT:
+            SPEED -= 10
+            print(SPEED)
+        if event.key == pygame.K_RIGHT:
+            SPEED += 10
+            print(SPEED)
 
 class SnakeGameAI:
     
@@ -36,6 +49,10 @@ class SnakeGameAI:
         pygame.display.set_caption('Snake')
         self.clock = pygame.time.Clock()
         self.reset()
+
+        
+        self.speed = SPEED
+        self.speed_increment = 120
         
      
     def reset(self):
@@ -59,20 +76,32 @@ class SnakeGameAI:
             self._placeFood()
         
     def playStep(self, action):
-        
+    
         self.frameIteration += 1
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 quit()
-        
-        
-        
+            # Increase or decrease speed if right or left arrow key is pressed
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_LEFT:
+                    self.speed -= self.speed_increment
+                    self.LAST_SPEED = self.speed
+                    print(f"Speed decreased: {self.speed}")
+                elif event.key == pygame.K_RIGHT:
+                    self.speed += self.speed_increment
+                    self.LAST_SPEED = self.speed
+                    print(f"Speed increased: {self.speed}")
+                elif event.key == pygame.K_DOWN:
+                    self.speed = STANDARD_SPEED
+                elif event.key == pygame.K_UP:
+                    self.speed = LAST_SPEED
+                    
         self._move(action) 
         self.snake.insert(0, self.head)
         
-        reward =0
+        reward = 0
         gameOver = False
         if self.isCollision() or self.frameIteration > 100*len(self.snake):
             gameOver = True
@@ -86,12 +115,12 @@ class SnakeGameAI:
         else:
             self.snake.pop()
         
-       
-        self._updateUI()
-        self.clock.tick(SPEED)
- 
-        return reward, gameOver, self.score
     
+        self._updateUI()
+        self.clock.tick(self.speed)
+
+        return reward, gameOver, self.score
+        
     def isCollision(self, point=None):
 
         if point is None:
